@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liên Hệ & Đặt Hàng | Đặc Sản Tây Nguyên</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <header>
+        <div class="container header-container">
+            <div class="brand">
+                <h1 class="brand-title">Đặc Sản Tây Nguyên</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Trang chủ</a></li>
+                    <li><a href="products.html">Sản phẩm</a></li>
+                    <li><a href="contact.html" class="active">Liên hệ</a></li>
+                    <li><a href="#" id="cart-icon" style="color: var(--color-secondary); font-weight: bold;">Giỏ hàng
+                            (<span id="cart-count">0</span>)</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section>
+            <h1>Thông Tin Đặt Hàng</h1>
+            <p>Vui lòng điền thông tin bên dưới để chúng tôi giao hàng đến cho bạn.</p>
+        </section>
+
+        <div class="products-layout">
+            <form id="order-form" class="contact-form">
+                <div class="form-group">
+                    <label for="customer-name">Họ tên khách hàng</label>
+                    <input type="text" id="customer-name" placeholder="Nguyễn Văn A">
+                </div>
+                <div class="form-group">
+                    <label for="phone">Số điện thoại</label>
+                    <input type="text" id="phone" placeholder="0900000000">
+                </div>
+                <div class="form-group">
+                    <label for="address">Địa chỉ nhận hàng</label>
+                    <input type="text" id="address" placeholder="Nhập chi tiết số nhà, tên đường...">
+                </div>
+                <div class="form-group">
+                    <label for="note">Ghi chú đơn hàng</label>
+                    <textarea id="note" rows="5" placeholder="Ghi chú thêm..."></textarea>
+                </div>
+                <button type="submit" class="btn">Gửi đơn hàng</button>
+            </form>
+
+            <aside class="filter-sidebar">
+                <h2>Thông Tin Bổ Sung</h2>
+                <p><strong>Địa chỉ kho:</strong> TP. Buôn Ma Thuột, Đắk Lắk</p>
+                <p><strong>Hotline:</strong> 0900 000 000</p>
+                <p><strong>Email:</strong> lienhe@dacsantaynguyen.vn</p>
+            </aside>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container footer-bottom">
+            <p>&copy; 2026 Dự án Đặc sản Tây Nguyên. Tất cả quyền được bảo lưu.</p>
+        </div>
+    </footer>
+
+    <!-- Popup Giỏ Hàng -->
+    <div id="cart-modal" class="cart-modal-overlay">
+        <div class="cart-modal">
+            <div class="cart-modal-header">
+                <h2>Giỏ Hàng Của Bạn</h2>
+                <button id="close-cart" class="btn btn-outline"
+                    style="padding: 4px 12px; font-size: 1.2rem;">&times;</button>
+            </div>
+            <div class="cart-modal-body" id="cart-items"></div>
+            <div class="cart-modal-footer">
+                <p class="cart-total">Tổng tiền: <span id="cart-total-price">0 đ</span></p>
+                <a href="contact.html" class="btn btn-secondary">Đến trang Đặt hàng</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/products.js"></script>
+    <script src="js/main.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">Chi Tiết Sản Phẩm | Đặc Sản Tây Nguyên</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <header>
+        <div class="container header-container">
+            <div class="brand">
+                <h1 class="brand-title">Đặc Sản Tây Nguyên</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Trang chủ</a></li>
+                    <li><a href="products.html">Sản phẩm</a></li>
+                    <li><a href="contact.html">Liên hệ</a></li>
+                    <li><a href="#" id="cart-icon" style="color: var(--color-secondary); font-weight: bold;">Giỏ hàng
+                            (<span id="cart-count">0</span>)</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <div id="product-detail-container" class="product-detail-layout">
+            <!-- Render động thông tin chi tiết -->
+        </div>
+
+        <section>
+            <h2>Sản Phẩm Khác</h2>
+            <div id="related-product-list" class="product-grid"></div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container footer-bottom">
+            <p>&copy; 2026 Dự án Đặc sản Tây Nguyên. Tất cả quyền được bảo lưu.</p>
+        </div>
+    </footer>
+
+    <!-- Popup Giỏ Hàng -->
+    <div id="cart-modal" class="cart-modal-overlay">
+        <div class="cart-modal">
+            <div class="cart-modal-header">
+                <h2>Giỏ Hàng Của Bạn</h2>
+                <button id="close-cart" class="btn btn-outline"
+                    style="padding: 4px 12px; font-size: 1.2rem;">&times;</button>
+            </div>
+            <div class="cart-modal-body" id="cart-items"></div>
+            <div class="cart-modal-footer">
+                <p class="cart-total">Tổng tiền: <span id="cart-total-price">0 đ</span></p>
+                <a href="contact.html" class="btn btn-secondary">Đến trang Đặt hàng</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/products.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const productId = Number(params.get('id')) || 1;
+            const product = products.find(item => item.id === productId);
+            const container = document.querySelector("#product-detail-container");
+
+            if (!product) {
+                if (container) container.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 40px;">Không tìm thấy thông tin sản phẩm!</p>';
+                return;
+            }
+
+            document.title = `${product.name} | Chi Tiết Sản Phẩm`;
+
+            container.innerHTML = `
+                <div>
+                    <img src="${product.image}" alt="${product.name}" style="width: 100%; border-radius: var(--radius-lg); border: 1px solid var(--color-border);">
+                </div>
+                <div class="product-detail-info">
+                    <h1>${product.name}</h1>
+                    <p class="price" style="font-size: 1.5rem; margin: 10px 0;">${product.price.toLocaleString("vi-VN")} đ</p>
+                    <p style="margin-bottom: 16px; line-height: 1.7;">${product.description}</p>
+                    <h2>Thông số sản phẩm</h2>
+                    <dl>
+                        <dt>Danh mục:</dt><dd style="text-transform: capitalize;">${product.category}</dd>
+                        <dt>Xuất xứ:</dt><dd>${product.origin}</dd>
+                        <dt>Quy cách:</dt><dd>${product.unit}</dd>
+                        <dt>Tình trạng:</dt><dd style="color: ${product.stock > 0 ? 'var(--color-secondary)' : '#dc2626'}; font-weight: 600;">${product.stock > 0 ? 'Còn hàng (' + product.stock + ' sản phẩm)' : 'Hết hàng'}</dd>
+                    </dl>
+                    <div class="action-group">
+                        <button type="button" id="add-to-cart-detail" class="btn" ${product.stock === 0 ? 'disabled style="opacity: 0.6; cursor: not-allowed;"' : ''}>Thêm vào giỏ hàng</button>
+                        <a href="contact.html" class="btn btn-secondary">Liên hệ tư vấn</a>
+                    </div>
+                </div>
+            `;
+
+            let cart = JSON.parse(localStorage.getItem('cart')) || [];
+            function updateCartCount() {
+                document.querySelectorAll("#cart-count").forEach(el => el.textContent = cart.length);
+            }
+            updateCartCount();
+
+            const addBtn = document.querySelector("#add-to-cart-detail");
+            if (addBtn) {
+                addBtn.addEventListener("click", () => {
+                    cart.push(product);
+                    localStorage.setItem('cart', JSON.stringify(cart));
+                    updateCartCount();
+                    alert(`Đã thêm "${product.name}" vào giỏ hàng!`);
+                });
+            }
+
+            const relatedContainer = document.querySelector("#related-product-list");
+            if (relatedContainer) {
+                const relatedProducts = products.filter(item => item.id !== productId).slice(0, 3);
+                relatedContainer.innerHTML = relatedProducts.map(item => `
+                    <article class="product-card">
+                        <img src="${item.image}" alt="${item.name}">
+                        <div class="content">
+                            <h3>${item.name}</h3>
+                            <p class="price">${item.price.toLocaleString("vi-VN")} đ</p>
+                            <a href="product-detail.html?id=${item.id}" class="btn btn-outline" style="margin-top: auto; display: block; text-align: center;">Xem chi tiết</a>
+                        </div>
+                    </article>
+                `).join("");
+            }
+        });
+    </script>
+    <script src="js/main.js"></script>
+</body>
+
+</html>

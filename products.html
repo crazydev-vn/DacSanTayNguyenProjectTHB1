@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh Sách Đặc Sản Tây Nguyên | Sản Phẩm Chất Lượng</title>
+    <meta name="description" content="Danh sách đầy đủ đặc sản Tây Nguyên chính hiệu.">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <header>
+        <div class="container header-container">
+            <div class="brand">
+                <h1 class="brand-title">Đặc Sản Tây Nguyên</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="index.html">Trang chủ</a></li>
+                    <li><a href="products.html" class="active">Sản phẩm</a></li>
+                    <li><a href="contact.html">Liên hệ</a></li>
+                    <li><a href="#" id="cart-icon" style="color: var(--color-secondary); font-weight: bold;">Giỏ hàng
+                            (<span id="cart-count">0</span>)</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section>
+            <h1>Danh Sách Sản Phẩm Đặc Sản</h1>
+            <p>Tổng hợp các nông sản và quà tặng chất lượng nhất đến từ các tỉnh Tây Nguyên.</p>
+        </section>
+
+        <div class="products-layout">
+            <aside class="filter-sidebar">
+                <h2>Bộ Lọc Sản Phẩm</h2>
+                <div class="filter-group">
+                    <label for="search-input">Tìm kiếm</label>
+                    <input type="text" id="search-input" placeholder="Nhập tên sản phẩm...">
+                </div>
+                <div class="filter-group">
+                    <label for="category-select">Danh mục</label>
+                    <select id="category-select">
+                        <option value="all">Tất cả danh mục</option>
+                        <option value="ca-phe">Cà phê & Ca cao</option>
+                        <option value="mat-ong">Mật ong rừng</option>
+                        <option value="mac-ca">Hạt dinh dưỡng</option>
+                        <option value="tieu">Gia vị</option>
+                        <option value="bo">Bơ sáp</option>
+                        <option value="tho-cam">Thổ cẩm</option>
+                        <option value="dac-san-khac">Đặc sản khác</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="price-select">Khoảng giá</label>
+                    <select id="price-select">
+                        <option value="all">Tất cả giá</option>
+                        <option value="under-150">Dưới 150.000 VNĐ</option>
+                        <option value="150-300">150.000 - 300.000 VNĐ</option>
+                        <option value="over-300">Trên 300.000 VNĐ</option>
+                    </select>
+                </div>
+                <button type="button" id="filter-btn" class="btn" style="width: 100%;">Lọc sản phẩm</button>
+            </aside>
+
+            <section id="product-list" class="product-grid">
+                <!-- Render động bằng JS -->
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container footer-bottom">
+            <p>&copy; 2026 Dự án Đặc sản Tây Nguyên. Tất cả quyền được bảo lưu.</p>
+        </div>
+    </footer>
+
+    <!-- Popup Giỏ Hàng -->
+    <div id="cart-modal" class="cart-modal-overlay">
+        <div class="cart-modal">
+            <div class="cart-modal-header">
+                <h2>Giỏ Hàng Của Bạn</h2>
+                <button id="close-cart" class="btn btn-outline"
+                    style="padding: 4px 12px; font-size: 1.2rem;">&times;</button>
+            </div>
+            <div class="cart-modal-body" id="cart-items"></div>
+            <div class="cart-modal-footer">
+                <p class="cart-total">Tổng tiền: <span id="cart-total-price">0 đ</span></p>
+                <a href="contact.html" class="btn btn-secondary">Đến trang Đặt hàng</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/products.js"></script>
+    <script src="js/main.js"></script>
+</body>
+
+</html>
