@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="vi">
 
+<!-- nhận dữ liệu -> vẽ -->
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -61,7 +63,7 @@
 
     <script src="js/products.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        function renderProductDetail() {
             const params = new URLSearchParams(window.location.search);
             const productId = Number(params.get('id')) || 1;
             const product = products.find(item => item.id === productId);
@@ -125,6 +127,14 @@
                         </div>
                     </article>
                 `).join("");
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (products.length > 0) {
+                renderProductDetail();
+            } else {
+                document.addEventListener('products-loaded', renderProductDetail, { once: true });
             }
         });
     </script>

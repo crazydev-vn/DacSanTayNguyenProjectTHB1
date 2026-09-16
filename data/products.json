@@ -1,0 +1,122 @@
+[
+    {
+        "id": 1,
+        "name": "Cà phê Robusta Buôn Ma Thuột",
+        "category": "ca-phe",
+        "price": 150000,
+        "unit": "Hộp 500g",
+        "origin": "Đắk Lắk",
+        "image": "images/ca-phe-buon-ma-thuot.jpg",
+        "stock": 20,
+        "description": "Cà phê Robusta Buôn Ma Thuột được tuyển chọn từ những hạt cà phê chín đỏ trên cao nguyên Đắk Lắk, rang mộc đậm đà.",
+        "featured": true
+    },
+    {
+        "id": 2,
+        "name": "Mật ong hoa rừng Tây Nguyên",
+        "category": "mat-ong",
+        "price": 190000,
+        "unit": "Chai 500ml",
+        "origin": "Gia Lai",
+        "image": "images/mat-ong-rung-tay-nguyen.jpg",
+        "stock": 15,
+        "description": "Mật ong hoa rừng tự nhiên nguyên chất, màu vàng sánh mịn, thơm ngọt thanh nhẹ và giàu dưỡng chất.",
+        "featured": true
+    },
+    {
+        "id": 3,
+        "name": "Hạt Mắc ca sấy nứt vỏ",
+        "category": "mac-ca",
+        "price": 180000,
+        "unit": "Túi 500g",
+        "origin": "Lâm Đồng",
+        "image": "images/mac-ca-tay-nguyen.jpg",
+        "stock": 30,
+        "description": "Hạt mắc ca Tây Nguyên béo bùi, giàu dinh dưỡng, sấy tự nhiên dễ bóc vỏ.",
+        "featured": true
+    },
+    {
+        "id": 4,
+        "name": "Tiêu đen hạt mẩy Đắk Nông",
+        "category": "tieu",
+        "price": 120000,
+        "unit": "Túi 500g",
+        "origin": "Đắk Nông",
+        "image": "images/tieu-dak-nong.jpg",
+        "stock": 50,
+        "description": "Hạt tiêu Đắk Nông mẩy đều, cay nồng tự nhiên thơm vị đặc trưng vùng đất bazan.",
+        "featured": true
+    },
+    {
+        "id": 5,
+        "name": "Bơ sáp Đắk Lắk dẻo quánh",
+        "category": "bo",
+        "price": 90000,
+        "unit": "Kg",
+        "origin": "Đắk Lắk",
+        "image": "images/bo-sap-dak-lak.jpg",
+        "stock": 0,
+        "description": "Thịt bơ sáp dẻo quánh, béo ngậy, hạt nhỏ, vỏ xanh dễ bóc.",
+        "featured": true
+    },
+    {
+        "id": 6,
+        "name": "Thổ cẩm dệt thủ công",
+        "category": "tho-cam",
+        "price": 250000,
+        "unit": "Tấm",
+        "origin": "Kon Tum",
+        "image": "images/tho-cam-tay-nguyen.jpg",
+        "stock": 10,
+        "description": "Sản phẩm thổ cẩm dệt thủ công truyền thống mang đậm bản sắc văn hóa các dân tộc Tây Nguyên.",
+        "featured": true
+    },
+    {
+        "id": 7,
+        "name": "Rượu Cần Tây Nguyên",
+        "category": "dac-san-khac",
+        "price": 350000,
+        "unit": "Chóe 5L",
+        "origin": "Đắk Lắk",
+        "image": "images/ca-phe-buon-ma-thuot.jpg",
+        "stock": 8,
+        "description": "Rượu cần truyền thống ủ men lá tự nhiên, đậm đà tình thân trong các dịp lễ hội.",
+        "featured": false
+    },
+    {
+        "id": 8,
+        "name": "Măng khô rừng tự nhiên",
+        "category": "dac-san-khac",
+        "price": 160000,
+        "unit": "Túi 500g",
+        "origin": "Gia Lai",
+        "image": "images/tieu-dak-nong.jpg",
+        "stock": 25,
+        "description": "Măng lưỡi lợn khô tự nhiên hái từ rừng già Tây Nguyên, không hóa chất tẩy trắng.",
+        "featured": false
+    },
+    {
+        "id": 9,
+        "name": "Bột Ca cao nguyên chất",
+        "category": "ca-phe",
+        "price": 130000,
+        "unit": "Hộp 400g",
+        "origin": "Đắk Lắk",
+        "image": "images/ca-phe-buon-ma-thuot.jpg",
+        "stock": 20,
+        "description": "Bột ca cao nguyên chất thơm ngon, ít béo, trồng và sản xuất trực tiếp tại Đắk Lắk.",
+        "featured": false
+    },
+    {
+        "id": 10,
+        "name": "Hạt điều rang muối Tây Nguyên",
+        "category": "mac-ca",
+        "price": 170000,
+        "unit": "Hộp 450g",
+        "origin": "Bình Phước",
+        "image": "images/mac-ca-tay-nguyen.jpg",
+        "stock": 40,
+        "description": "Hạt điều to đều, giòn rụm, đậm đà vị muối rang thủ công truyền thống.",
+        "featured": false
+    }
+]

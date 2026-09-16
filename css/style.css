@@ -1,20 +1,20 @@
 /* a. CSS Nền tảng (Biến toàn cục :root) */
 :root {
     /* Định nghĩa các biến CSS toàn cục để tái sử dụng trong toàn bộ dự án */
-    /* Màu sắc chủ đạo: màu nâu đỏ, sử dụng cho tiêu đề, nút bấm, liên kết */
-    --color-primary: #7c2d12;
-    /* Màu sắc phụ: màu xanh lá, sử dụng cho hover, nút bấm phụ, focus */
-    --color-secondary: #16a34a;
-    /* Màu nền tổng thể của trang */
-    --color-background: #f8fafc;
-    /* Màu nền của các thành phần (card, form, header) */
-    --color-surface: #ffffff;
-    /* Màu chữ chính, tương phản tốt trên nền sáng */
-    --color-text: #1e293b;
-    /* Màu chữ mờ, dùng cho mô tả, phụ đề */
-    --color-muted: #64748b;
-    /* Màu viền cho các thành phần */
-    --color-border: #e2e8f0;
+    /* Màu sắc chủ đạo: nâu đất (đất bazan), sử dụng cho tiêu đề, nút bấm, liên kết */
+    --color-primary: #6b3d1f;
+    /* Màu sắc phụ: xanh ô liu, sử dụng cho hover, nút bấm phụ, focus */
+    --color-secondary: #6b7a3f;
+    /* Màu nền tổng thể của trang: kem giấy cũ */
+    --color-background: #f4ecd8;
+    /* Màu nền của các thành phần (card, form, header): trắng ngà */
+    --color-surface: #fdf8ee;
+    /* Màu chữ chính: nâu than, tương phản tốt trên nền sáng */
+    --color-text: #3b2a1e;
+    /* Màu chữ mờ, dùng cho mô tả, phụ đề: nâu be trầm */
+    --color-muted: #8a7458;
+    /* Màu viền cho các thành phần: be đất */
+    --color-border: #d8c6a5;
     /* Bo góc vừa phải cho nút, input, card */
     --radius-md: 8px;
     /* Bo góc lớn cho section, form */
@@ -124,7 +124,7 @@ button,
 button:hover,
 .btn:hover {
     /* Màu tối hơn của primary khi hover */
-    background-color: #60220e;
+    background-color: #4e2c16;
     text-decoration: none;
 }
 
@@ -134,7 +134,7 @@ button:hover,
 }
 
 .btn-secondary:hover {
-    background-color: #12823A;
+    background-color: #545f31;
 }
 
 /* Biến thể nút viền (outline) */
@@ -220,7 +220,7 @@ nav a.active {
 
 /* Hero Section - Phần giới thiệu nổi bật */
 .hero {
-    background-color: #fef3c7;
+    background-color: #e8d5a8;
     border-radius: var(--radius-lg);
     padding: var(--space-xl) var(--space-lg);
     margin: var(--space-lg) 0;
@@ -407,14 +407,14 @@ section {
 
 /* Footer */
 footer {
-    background-color: #0f172a;
-    color: #f8fafc;
+    background-color: #2b1c11;
+    color: #f4ecd8;
     padding: var(--space-xl) 0 var(--space-md) 0;
     margin-top: var(--space-xl);
 }
 
 footer a {
-    color: #94a3b8;
+    color: #c9b28a;
 }
 
 footer a:hover {
@@ -430,10 +430,10 @@ footer a:hover {
 
 .footer-bottom {
     text-align: center;
-    border-top: 1px solid #334155;
+    border-top: 1px solid #4a3521;
     padding-top: var(--space-md);
     font-size: 0.9rem;
-    color: #94a3b8;
+    color: #c9b28a;
 }
 
 /* Animation Keyframes - Hiệu ứng xuất hiện */
