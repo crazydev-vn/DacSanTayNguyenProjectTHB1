@@ -238,7 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         // Lắng nghe sự kiện tùy chỉnh "products-loaded" để render khi dữ liệu được nạp xong bất đồng bộ
         document.addEventListener("products-loaded", () => {
-            renderProducts(products); k
+            renderProducts(products);
         });
     }
 });
