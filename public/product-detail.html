@@ -98,18 +98,19 @@
                 </div>
             `;
 
-            let cart = JSON.parse(localStorage.getItem('cart')) || [];
-            function updateCartCount() {
-                document.querySelectorAll("#cart-count").forEach(el => el.textContent = cart.length);
-            }
+            // Dùng chung biến `cart` và các hàm saveCart()/updateCartCount()
+            // đã khai báo ở phạm vi top-level trong main.js (main.js được tải
+            // sau nên các biến/hàm này đã sẵn sàng trước khi renderProductDetail
+            // chạy). Không tự khai báo `cart` riêng ở đây nữa để tránh 2 nơi
+            // quản lý giỏ hàng lệch nhau (thêm ở trang chi tiết nhưng modal
+            // giỏ hàng của main.js không thấy ngay, phải F5 mới cập nhật).
             updateCartCount();
 
             const addBtn = document.querySelector("#add-to-cart-detail");
             if (addBtn) {
                 addBtn.addEventListener("click", () => {
                     cart.push(product);
-                    localStorage.setItem('cart', JSON.stringify(cart));
-                    updateCartCount();
+                    saveCart(); // saveCart() đã tự lưu localStorage + gọi updateCartCount()
                     alert(`Đã thêm "${product.name}" vào giỏ hàng!`);
                 });
             }

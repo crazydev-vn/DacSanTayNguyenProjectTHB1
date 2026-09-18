@@ -70,38 +70,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ============================================================
-    // Xử lý lọc và tìm kiếm sản phẩm
+    // Xử lý lọc và tìm kiếm sản phẩm (gọi API backend)
     // ============================================================
-    // Hàm xử lý việc lọc sản phẩm theo từ khóa tìm kiếm, danh mục và khoảng giá
-    function handleFilterAndSearch() {
-        // Lấy giá trị từ các ô input/select, chuyển chữ thường (toLowerCase) và cắt bỏ khoảng trắng thừa (trim)
-        const keyword = searchInput ? searchInput.value.toLowerCase().trim() : "";
+    // Hàm gọi API /api/products kèm query params search/category/price
+    // để server tự lọc, thay vì lọc mảng products ở client như trước.
+    async function handleFilterAndSearch() {
+        const keyword = searchInput ? searchInput.value.trim() : "";
         const category = categoryFilter ? categoryFilter.value : "all";
         const priceRange = priceFilter ? priceFilter.value : "all";
 
-        // Dùng phương thức .filter() để lọc mảng products gốc
-        const result = products.filter(product => {
-            // Kiểm tra từ khóa có khớp với tên hoặc mô tả sản phẩm không
-            const matchKeyword = keyword === "" || product.name.toLowerCase().includes(keyword) || product.description.toLowerCase().includes(keyword);
-            // Kiểm tra danh mục có khớp hoặc chọn "all" không
-            const matchCategory = category === "all" || product.category === category;
+        // Dựng query string từ các giá trị lọc hiện tại
+        const params = new URLSearchParams();
+        if (keyword) params.set("search", keyword);
+        if (category && category !== "all") params.set("category", category);
+        if (priceRange && priceRange !== "all") params.set("price", priceRange);
 
-            // Kiểm tra điều kiện khoảng giá
-            let matchPrice = true;
-            if (priceRange === "under-150") {
-                matchPrice = product.price < 150000;
-            } else if (priceRange === "150-300") {
-                matchPrice = product.price >= 150000 && product.price <= 300000;
-            } else if (priceRange === "over-300") {
-                matchPrice = product.price > 300000;
-            }
-
-            // Chỉ lấy sản phẩm thỏa mãn đồng thời cả 3 điều kiện trên
-            return matchKeyword && matchCategory && matchPrice;
-        });
-
-        // Gọi lại hàm renderProducts để vẽ ra danh sách các sản phẩm sau khi lọc
-        renderProducts(result);
+        try {
+            const response = await fetch(`/api/products?${params.toString()}`);
+            if (!response.ok) throw new Error("Không lọc được sản phẩm từ API");
+            const result = await response.json();
+            // Vẽ ra danh sách sản phẩm sau khi lọc từ server
+            renderProducts(result);
+        } catch (error) {
+            console.error("Lỗi khi lọc sản phẩm:", error);
+            productList.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 20px;">Có lỗi xảy ra, vui lòng thử lại.</p>';
+        }
     }
 
     // Gắn sự kiện tương ứng cho các thành phần lọc nếu chúng tồn tại trên trang
@@ -204,26 +197,53 @@ document.addEventListener('DOMContentLoaded', () => {
     // Xử lý form đặt hàng (dành cho trang contact.html)
     // ============================================================
     if (orderForm) {
-        orderForm.addEventListener("submit", function (event) {
+        orderForm.addEventListener("submit", async function (event) {
             event.preventDefault(); // Ngăn chặn hành vi mặc định của form là reload lại trang
 
             // Lấy giá trị dữ liệu khách hàng nhập vào từ các ô input và cắt khoảng trắng thừa
             const customerName = document.querySelector("#customer-name").value.trim();
             const phone = document.querySelector("#phone").value.trim();
             const address = document.querySelector("#address").value.trim();
+            const note = document.querySelector("#note").value.trim();
 
-            // Kiểm tra ràng buộc dữ liệu đầu vào (Validation)
+            // Kiểm tra ràng buộc dữ liệu đầu vào ở client trước (phản hồi nhanh, đỡ tốn 1 lượt gọi API)
+            // Server (routes/orders.routes.js) vẫn kiểm tra lại toàn bộ để đảm bảo an toàn dữ liệu
             if (customerName.length < 3) return alert("Họ tên phải có ít nhất 3 ký tự.");
             if (!/^[0-9]{10}$/.test(phone)) return alert("Số điện thoại phải gồm đúng 10 chữ số."); // Kiểm tra chuỗi đúng 10 số bằng Regex
             if (address.length < 10) return alert("Địa chỉ nhận hàng phải có ít nhất 10 ký tự chi tiết.");
             if (cart.length === 0) return alert("Giỏ hàng của bạn đang trống. Vui lòng chọn sản phẩm trước khi đặt hàng!");
 
-            // Nếu dữ liệu hợp lệ hoàn toàn: Hiển thị thông báo thành công, reset form và làm trống giỏ hàng
-            alert(`Cảm ơn Quý khách ${customerName}! Đơn hàng của bạn đã được tiếp nhận thành công.`);
-            orderForm.reset();
-            cart = [];
-            saveCart();
-            renderCartUI();
+            const submitBtn = orderForm.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
+
+            try {
+                // Gửi đơn hàng lên API backend, backend sẽ validate lại và lưu vào data/orders.json
+                const response = await fetch("/api/orders", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ customerName, phone, address, note, cart }),
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    // Server trả lỗi validate (400) -> hiển thị thông báo lỗi tương ứng
+                    alert(result.error || "Có lỗi xảy ra, vui lòng thử lại.");
+                    return;
+                }
+
+                // Đặt hàng thành công: hiển thị thông báo, reset form và làm trống giỏ hàng
+                alert(`Cảm ơn Quý khách ${customerName}! Đơn hàng của bạn đã được tiếp nhận thành công.`);
+                orderForm.reset();
+                cart = [];
+                saveCart();
+                renderCartUI();
+            } catch (error) {
+                console.error("Lỗi khi gửi đơn hàng:", error);
+                alert("Không thể kết nối tới server. Vui lòng thử lại sau.");
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
+            }
         });
     }
 
