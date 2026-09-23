@@ -1,58 +1,53 @@
 // server.js: cửa vào của toàn bộ trang khi chạy
 // npm start -> node chạy server.js:
-// 1. trả các file html/css/js/ ảnh trong folder public
-// 2. Cung cấp API (/api/products; orders) để fropublic
-// 3. Lấy dữ liệu sản phẩm
-// 4. cần server vì products.js dùng fetch("data/products.json") 
-//    fetch bị trình duyệt chặmn (CORS) khi mở file html trực tiếp
-// 5. _kiểu file_://... chạy qua server (http://localhost) sẽ hết lỗi lúc chạy
+// 1. Kết nối MongoDB (config/db.js)
+// 2. trả các file html/css/js/ ảnh trong folder public
+// 3. Cung cấp API (/api/products; /api/orders)
+// 4. Dữ liệu sản phẩm/đơn hàng giờ nằm trong MongoDB thay vì file JSON
 
+require("dotenv").config(); // Nạp biến môi trường từ .env (MONGODB_URI, PORT...)
 
-//Nạp thư viện: 
-// express: framework tạo web sever + định nghĩa router
-// Khai báo "express" ở package.json mục "dependencies"
 const express = require("express");
-
-// path: module sẵn của node: ghép đường dẫn đến thư mục 
-// win +  linux [\]
-// mac [/]
 const path = require("path");
+const connectDB = require("./config/db");
 
 // routes mỗi file -> xử lý 1 nhóm API giúp sever.js gọn + dễ update
-
-// product.routes.js: API sp đọc data/products.js
 const productsRouter = require("./routes/products.routes");
+const ordersRouter = require("./routes/orders.routes");
 
-// order.routes.js: các API về đơn hàng ghi data/order.js
-const ordersRouter = require("./routes/orders.routes");    //Chưa hoàn thiện orders
-
-// app là đối tượng đại diện cho toàn bộ server Express
 const app = express();
-
-// cổng port sever nghe khi deploy lên hosting
-// nền tảng tự cung cấp qua mtr PORT chạy trên máy mình ko có PORT thù dùng cổng 3000
 const PORT = process.env.PORT || 3000;
 
-// Cho phép Express đọc JSON gửi lên từ body (POST /api/orders)
+// express.json() là middleware: MỌI request đi qua đây trước khi tới
+// route. Nó đọc phần "body" thô (chuỗi JSON) mà client gửi lên, parse
+// thành object JS và gán vào req.body - nếu thiếu dòng này thì
+// req.body trong orders.routes.js sẽ là undefined.
 app.use(express.json());
 
-// Gắn router vào các API:mọi request đều có đường dẫn 
-app.use("/api/products", productsRouter);   //GET   /api/products -> productsRouter xử lý
-app.use("/api/orders", ordersRouter);   //POST /api/order -> ordersRouter xử lý
+// Gắn router vào các API - đây là bước "định tuyến": request tới
+// đúng tiền tố nào (/api/products hay /api/orders) sẽ được chuyển hẳn
+// cho file router tương ứng xử lý tiếp, server.js không biết chi tiết
+// logic bên trong, chỉ biết chuyển tiếp đúng chỗ.
+app.use("/api/products", productsRouter); // GET  /api/products -> productsRouter xử lý
+app.use("/api/orders", ordersRouter);     // POST /api/orders -> ordersRouter xử lý
 
 // express.static biến folder "public" thành folder gốc của web
-// http:localhost:3000/ -> public/index.html /css.style.css -> public/css.....
 app.use(express.static(path.join(__dirname, "public")));
 
 // Fallback: nếu gõ sai đường dẫn thì đưa về trang chủ
-// app.get"*" khớp mọi get chưa route nào ko phải file tĩnh + null -> errol 404
-// "*" bắt tất cả đặt cuối, nếu ko sẽ chặn các route sau
 app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// start server 
-// listen(): nhận request cổng PORT, callback chạy 1 lần -> server sẵn sàng -> in ra thông báo ở terminal
-app.listen(PORT, () => {
-    console.log(`✅ Server đang chạy tại: http://localhost:${PORT}`);
-});
+// Kết nối MongoDB xong mới mở cổng lắng nghe, tránh trường hợp có
+// request tới nhưng DB chưa sẵn sàng (await connectDB() sẽ "đứng chờ"
+// tới khi mongoose.connect() thành công hoặc lỗi, app.listen() chỉ
+// chạy sau khi Promise đó resolve).
+async function start() {
+    await connectDB();
+    app.listen(PORT, () => {
+        console.log(`✅ Server đang chạy tại: http://localhost:${PORT}`);
+    });
+}
+
+start();
