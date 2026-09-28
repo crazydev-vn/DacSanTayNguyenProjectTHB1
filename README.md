@@ -18,3 +18,21 @@ project/
     │   ├── main.js
     │   └── products.js
     └── images/               # Bạn cần bổ sung ảnh sản phẩm vào đây
+
+
+
+
+
+
+data/products.json ──(npm run seed, chạy 1 lần)──► MongoDB (collection "products")
+                                                        │
+                            models/Product.js  (khuôn mẫu 1 sản phẩm)
+                                                        │
+             routes/products.routes.js  ◄── truy vấn ──┘
+                     │  trả JSON qua địa chỉ /api/products
+                     ▼
+        public/js/products.js  (fetch API, lưu vào mảng products)
+                     │
+                     ▼
+        public/js/main.js  (lọc + vẽ thẻ sản phẩm ra trang)
+

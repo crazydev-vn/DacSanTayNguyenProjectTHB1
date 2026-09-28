@@ -1,15 +1,35 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
+            // Chạy server Node (tương đương "npm run dev" nhưng có thể debug)
+            "type": "node",
+            "request": "launch",
+            "name": "Chạy server Node",
+            "program": "${workspaceFolder}/server.js",
+            "cwd": "${workspaceFolder}",
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        },
+        {
+            // Mở Chrome vào trang web (cần server đang chạy)
             "type": "chrome",
             "request": "launch",
-            "name": "Launch Chrome against localhost",
-            "url": "http://localhost:8080",
-            "webRoot": "${workspaceFolder}"
+            "name": "Mở Chrome (localhost:3000)",
+            "url": "http://localhost:3000",
+            "webRoot": "${workspaceFolder}/public"
+        }
+    ],
+    "compounds": [
+        {
+            // Bấm 1 lần: chạy server rồi mở Chrome
+            "name": "Server + Chrome",
+            "configurations": [
+                "Chạy server Node",
+                "Mở Chrome (localhost:3000)"
+            ],
+            "stopAll": true
         }
     ]
 }

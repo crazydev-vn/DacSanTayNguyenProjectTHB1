@@ -1,67 +1,77 @@
 // ============================================================
-// API Sản phẩm (đã chuyển từ đọc file JSON sang truy vấn MongoDB)
-// GET  /api/products            -> danh sách (hỗ trợ ?search=&category=&price=)
-// GET  /api/products/:id        -> chi tiết 1 sản phẩm theo id (số)
+// VAI TRÒ: định nghĩa API sản phẩm. Đây là nơi API LẤY DỮ LIỆU từ MongoDB.
+//   GET /api/products       -> danh sách sản phẩm (có thể lọc)
+//   GET /api/products/:id   -> chi tiết 1 sản phẩm
 // ============================================================
 
 const express = require("express");
-const Product = require("../models/Product");
+const Product = require("../models/Product");   // công cụ đọc collection "products"
 
-const router = express.Router();
+const router = express.Router();    // router = nhóm các đường dẫn API
 
-// GET /api/products?search=&category=&price=
-// Luồng dữ liệu: client gửi query string (?search=...) -> Express tự
-// parse thành object req.query -> route này DỊCH các điều kiện đó
-// thành 1 object "filter" đúng cú pháp truy vấn MongoDB -> đưa filter
-// cho Product.find() để MongoDB tự lọc ngay trong database (nhanh hơn
-// nhiều so với lấy hết rồi lọc bằng JS như bản dùng file JSON cũ).
+// Escape các ký tự đặc biệt của regex để từ khóa người dùng nhập
+// (vd "(", "*", "[") không làm hỏng câu truy vấn.
+// Thêm "\" trước ký tự đặc biệt của regex để từ khóa như "(" hay "*"
+// không làm hỏng câu truy vấn tìm kiếm.
+function escapeRegex(text) {
+    return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// ---------- GET /api/products ----------
+// Trình duyệt gọi: /api/products  hoặc  /api/products?category=ca-phe&price=under-150
 router.get("/", async (req, res) => {
     try {
+        // req.query = phần sau dấu "?" trên địa chỉ, Express tự tách sẵn
         const { search, category, price } = req.query;
-        const filter = {}; // filter rỗng = lấy tất cả, mỗi điều kiện dưới đây sẽ bổ sung thêm vào đây
 
-        if (search) {
-            const keyword = search.trim();
-            // Tìm gần đúng, không phân biệt hoa/thường trong tên hoặc mô tả
-            filter.$or = [
-                { name: { $regex: keyword, $options: "i" } },
-                { description: { $regex: keyword, $options: "i" } },
-            ];
+        // filter = "điều kiện lọc" gửi cho MongoDB. Rỗng {} = lấy tất cả.
+        const filter = {};
+
+        if (search && typeof search === "string") {
+            const keyword = escapeRegex(search.trim());
+            if (keyword) {
+                // tìm trong tên HOẶC mô tả, không phân biệt hoa/thường
+                filter.$or = [
+                    { name: { $regex: keyword, $options: "i" } },
+                    { description: { $regex: keyword, $options: "i" } },
+                ];
+            }
         }
 
-        if (category && category !== "all") {
-            filter.category = category;
+        if (category && typeof category === "string" && category !== "all") {
+            filter.category = category; // chỉ lấy đúng danh mục
         }
 
         if (price && price !== "all") {
             if (price === "under-150") {
-                filter.price = { $lt: 150000 };
+                filter.price = { $lt: 150000 }; // dưới 150k
             } else if (price === "150-300") {
-                filter.price = { $gte: 150000, $lte: 300000 };
+                filter.price = { $gte: 150000, $lte: 300000 };  // từ 150k đến 300k
             } else if (price === "over-300") {
-                filter.price = { $gt: 300000 };
+                filter.price = { $gt: 300000 }; // trên 300k
             }
         }
 
-        // Product.find(filter) = lệnh mongoose gửi thật sự tới MongoDB,
-        // trả về mảng document khớp điều kiện; .sort({id:1}) yêu cầu
-        // MongoDB sắp xếp sẵn trước khi trả về, đỡ phải sort lại ở JS.
+        // Product.find(filter): MongoDB tìm các sản phẩm khớp điều kiện.
+        // .sort({ id: 1 }): sắp xếp id tăng dần (1,2,3...).
         const products = await Product.find(filter).sort({ id: 1 });
-        res.json(products); // Express tự chuyển mảng object -> chuỗi JSON gửi về client
+        res.json(products); // gửi mảng sản phẩm về trình duyệt dạng JSON
     } catch (error) {
         console.error("Lỗi khi lấy danh sách sản phẩm:", error);
         res.status(500).json({ error: "Lỗi server khi lấy danh sách sản phẩm" });
     }
 });
 
-// GET /api/products/:id
-// :id trong đường dẫn là "tham số động", Express lấy giá trị thật
-// (vd "5" trong /api/products/5) đưa vào req.params.id dạng chuỗi ->
-// phải Number() lại vì field "id" trong MongoDB được lưu dạng số.
+// ---------- GET /api/products/:id ----------
+// ":id" là phần thay đổi, vd /api/products/5 thì req.params.id = "5"
 router.get("/:id", async (req, res) => {
     try {
-        const product = await Product.findOne({ id: Number(req.params.id) });
+        const id = Number(req.params.id);   // đổi chuỗi "5" thành số 5
+        if (!Number.isInteger(id)) {
+            return res.status(400).json({ error: "Mã sản phẩm không hợp lệ" });
+        }
 
+        const product = await Product.findOne({ id });  // tìm 1 sản phẩm theo id
         if (!product) {
             return res.status(404).json({ error: "Không tìm thấy sản phẩm" });
         }
@@ -73,4 +83,4 @@ router.get("/:id", async (req, res) => {
     }
 });
 
-module.exports = router;
+module.exports = router;    // để server.js gắn vào đường dẫn /api/products

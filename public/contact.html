@@ -32,19 +32,24 @@
             <p>Vui lòng điền thông tin bên dưới để chúng tôi giao hàng đến cho bạn.</p>
         </section>
 
+        <!-- Khung hiển thị kết quả đặt hàng thành công (main.js điền vào) -->
+        <div id="order-result"></div>
+
         <div class="products-layout">
             <form id="order-form" class="contact-form">
                 <div class="form-group">
                     <label for="customer-name">Họ tên khách hàng</label>
-                    <input type="text" id="customer-name" placeholder="Nguyễn Văn A">
+                    <input type="text" id="customer-name" placeholder="Nguyễn Văn A" autocomplete="name" required>
                 </div>
                 <div class="form-group">
                     <label for="phone">Số điện thoại</label>
-                    <input type="text" id="phone" placeholder="0900000000">
+                    <input type="tel" id="phone" placeholder="0900000000" inputmode="numeric" maxlength="10"
+                        autocomplete="tel" required>
                 </div>
                 <div class="form-group">
                     <label for="address">Địa chỉ nhận hàng</label>
-                    <input type="text" id="address" placeholder="Nhập chi tiết số nhà, tên đường...">
+                    <input type="text" id="address" placeholder="Nhập chi tiết số nhà, tên đường..."
+                        autocomplete="street-address" required>
                 </div>
                 <div class="form-group">
                     <label for="note">Ghi chú đơn hàng</label>
@@ -54,6 +59,9 @@
             </form>
 
             <aside class="filter-sidebar">
+                <!-- Tóm tắt giỏ hàng (main.js điền vào) -->
+                <div id="order-summary" style="margin-bottom: var(--space-lg);"></div>
+
                 <h2>Thông Tin Bổ Sung</h2>
                 <p><strong>Địa chỉ kho:</strong> TP. Buôn Ma Thuột, Đắk Lắk</p>
                 <p><strong>Hotline:</strong> 0900 000 000</p>
@@ -73,8 +81,8 @@
         <div class="cart-modal">
             <div class="cart-modal-header">
                 <h2>Giỏ Hàng Của Bạn</h2>
-                <button id="close-cart" class="btn btn-outline"
-                    style="padding: 4px 12px; font-size: 1.2rem;">&times;</button>
+                <button id="close-cart" class="btn btn-outline" style="padding: 4px 12px; font-size: 1.2rem;"
+                    aria-label="Đóng giỏ hàng">&times;</button>
             </div>
             <div class="cart-modal-body" id="cart-items"></div>
             <div class="cart-modal-footer">

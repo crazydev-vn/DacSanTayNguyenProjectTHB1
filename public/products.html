@@ -65,9 +65,8 @@
                 <button type="button" id="filter-btn" class="btn" style="width: 100%;">Lọc sản phẩm</button>
             </aside>
 
-            <section id="product-list" class="product-grid">
-                <!-- Render động bằng JS -->
-            </section>
+            <!-- main.js sẽ render sản phẩm vào đây -->
+            <section id="product-list" class="product-grid"></section>
         </div>
     </main>
 
@@ -82,8 +81,8 @@
         <div class="cart-modal">
             <div class="cart-modal-header">
                 <h2>Giỏ Hàng Của Bạn</h2>
-                <button id="close-cart" class="btn btn-outline"
-                    style="padding: 4px 12px; font-size: 1.2rem;">&times;</button>
+                <button id="close-cart" class="btn btn-outline" style="padding: 4px 12px; font-size: 1.2rem;"
+                    aria-label="Đóng giỏ hàng">&times;</button>
             </div>
             <div class="cart-modal-body" id="cart-items"></div>
             <div class="cart-modal-footer">
