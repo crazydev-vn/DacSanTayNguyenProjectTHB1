@@ -23,7 +23,7 @@ async function connectDB() {
         await mongoose.connect(uri);    // chờ kết nối xong mới đi tiếp
         console.log("✅ Đã kết nối MongoDB:", mongoose.connection.name);
     } catch (error) {
-        console.error("❌ Lỗi kết nối MongoDB:", error.message);
+        console.error("❌ Lỗi kết nối MongoDB:", error.message); so
         // Thoát tiến trình vì server không thể hoạt động thiếu database
         process.exit(1);    // không có database -> tắt server
     }
