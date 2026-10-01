@@ -81,7 +81,7 @@ router.post("/", async (req, res) => {
             const quantity = wanted.get(product.id);
             const result = await Product.updateOne(
                 { id: product.id, stock: { $gte: quantity } },
-                { $inc: { stock: -quantity } } // $inc = cộng/trừ số
+                { $inc: { stock: -quantity } } //$inc = cộng/trừ số
             );
             if (result.modifiedCount === 0) {
                 await restoreStock(deducted); // trả lại những món đã lỡ trừ
