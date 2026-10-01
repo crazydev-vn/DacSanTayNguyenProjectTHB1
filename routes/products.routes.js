@@ -1,11 +1,13 @@
 // ============================================================
 // VAI TRÒ: định nghĩa API sản phẩm. Đây là nơi API LẤY DỮ LIỆU từ MongoDB.
-//   GET /api/products       -> danh sách sản phẩm (có thể lọc)
-//   GET /api/products/:id   -> chi tiết 1 sản phẩm
+//   GET    /api/products       -> danh sách sản phẩm (có thể lọc)
+//   GET    /api/products/:id   -> chi tiết 1 sản phẩm
+//   DELETE /api/products/:id   -> xóa 1 sản phẩm (CHỈ admin)   [MỚI]
 // ============================================================
 
 const express = require("express");
 const Product = require("../models/Product");   // công cụ đọc collection "products"
+const requireAdmin = require("../middleware/requireAdmin"); // [MỚI] người gác cổng cho API quản trị
 
 const router = express.Router();    // router = nhóm các đường dẫn API
 
@@ -80,6 +82,32 @@ router.get("/:id", async (req, res) => {
     } catch (error) {
         console.error("Lỗi khi lấy chi tiết sản phẩm:", error);
         res.status(500).json({ error: "Lỗi server khi lấy chi tiết sản phẩm" });
+    }
+});
+
+// ---------- DELETE /api/products/:id (chỉ admin) ---------- [MỚI]
+// Gọi: DELETE /api/products/5 kèm header "x-admin-key: <ADMIN_KEY>".
+// Thứ tự trong router.delete(...): request đi qua requireAdmin TRƯỚC,
+// nếu đúng khóa mới chạy tiếp hàm xử lý phía sau.
+router.delete("/:id", requireAdmin, async (req, res) => {
+    try {
+        const id = Number(req.params.id);   // đổi chuỗi "5" thành số 5 (sản phẩm dùng id kiểu số)
+        if (!Number.isInteger(id)) {
+            return res.status(400).json({ error: "Mã sản phẩm không hợp lệ" });
+        }
+
+        // findOneAndDelete: tìm sản phẩm theo id rồi xóa luôn,
+        // trả về chính sản phẩm vừa xóa (hoặc null nếu không tìm thấy).
+        const deleted = await Product.findOneAndDelete({ id });
+        if (!deleted) {
+            return res.status(404).json({ error: "Không tìm thấy sản phẩm" });
+        }
+
+        // Đơn hàng cũ không bị ảnh hưởng vì đã lưu sẵn tên + giá lúc đặt (xem Order.js)
+        res.json({ message: "Đã xóa sản phẩm", product: deleted });
+    } catch (error) {
+        console.error("Lỗi khi xóa sản phẩm:", error);
+        res.status(500).json({ error: "Lỗi server khi xóa sản phẩm" });
     }
 });
 

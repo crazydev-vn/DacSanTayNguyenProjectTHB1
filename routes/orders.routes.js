@@ -1,28 +1,19 @@
 // ============================================================
 // routes/orders.routes.js
 // VAI TRÒ: API đơn hàng.
-//   POST /api/orders -> khách đặt hàng (ai cũng dùng được)
-//   GET  /api/orders -> xem tất cả đơn (CHỈ admin, cần khóa bí mật)
+//   POST   /api/orders       -> khách đặt hàng (ai cũng dùng được)
+//   GET    /api/orders       -> xem tất cả đơn (CHỈ admin, cần khóa bí mật)
+//   DELETE /api/orders/:id   -> xóa 1 đơn hàng (CHỈ admin)   [MỚI]
 // ============================================================
 
 const express = require("express");
 const Order = require("../models/Order");
 const Product = require("../models/Product");
+// [MỚI] "Người gác cổng" được tách ra file riêng (middleware/requireAdmin.js)
+// để dùng chung với products.routes.js. Hàm requireAdmin cũ ở đầu file này đã được bỏ.
+const requireAdmin = require("../middleware/requireAdmin");
 
 const router = express.Router();
-
-// "Người gác cổng": chỉ cho qua khi request có header x-admin-key
-// đúng bằng ADMIN_KEY trong file .env. Dùng để bảo vệ danh sách đơn hàng.
-function requireAdmin(req, res, next) {
-    const adminKey = process.env.ADMIN_KEY;
-    if (!adminKey) {
-        return res.status(403).json({ error: "Chức năng quản trị chưa được bật." });
-    }
-    if (req.get("x-admin-key") !== adminKey) {
-        return res.status(401).json({ error: "Không có quyền truy cập." });
-    }
-    next(); // hợp lệ -> đi tiếp vào route bên dưới
-}
 
 // Trả lại hàng vào kho nếu đặt đơn giữa chừng bị lỗi
 async function restoreStock(deducted) {
@@ -143,6 +134,28 @@ router.get("/", requireAdmin, async (req, res) => {
     } catch (error) {
         console.error("Lỗi khi lấy danh sách đơn hàng:", error);
         res.status(500).json({ error: "Lỗi server khi lấy danh sách đơn hàng" });
+    }
+});
+
+// ---------- DELETE /api/orders/:id (chỉ admin) ---------- [MỚI]
+// Gọi: DELETE /api/orders/<_id> kèm header "x-admin-key: <ADMIN_KEY>".
+// Lưu ý: đơn hàng dùng _id của MongoDB (chuỗi dài, lấy từ GET /api/orders),
+// khác với sản phẩm dùng id số.
+router.delete("/:id", requireAdmin, async (req, res) => {
+    try {
+        // findByIdAndDelete: tìm theo _id rồi xóa, trả về đơn vừa xóa (hoặc null nếu không có)
+        const deleted = await Order.findByIdAndDelete(req.params.id);
+        if (!deleted) {
+            return res.status(404).json({ error: "Không tìm thấy đơn hàng" });
+        }
+
+        // Xóa đơn KHÔNG tự hoàn lại tồn kho. Nếu muốn hoàn kho khi hủy đơn,
+        // cần cộng lại stock cho từng món trong deleted.items.
+        res.json({ message: "Đã xóa đơn hàng" });
+    } catch (error) {
+        // _id sai định dạng (không phải 24 ký tự hex) cũng nhảy vào đây
+        console.error("Lỗi khi xóa đơn hàng:", error);
+        res.status(400).json({ error: "Mã đơn hàng không hợp lệ" });
     }
 });
 
