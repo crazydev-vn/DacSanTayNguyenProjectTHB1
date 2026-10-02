@@ -1,21 +1,22 @@
 // ============================================================
 // routes/orders.routes.js
 // VAI TRÒ: API đơn hàng.
-//   POST   /api/orders       -> khách đặt hàng (ai cũng dùng được)
-//   GET    /api/orders       -> xem tất cả đơn (CHỈ admin, cần khóa bí mật)
-//   DELETE /api/orders/:id   -> xóa 1 đơn hàng (CHỈ admin)   [MỚI]
+//   POST   /api/orders               -> khách đặt hàng (ai cũng dùng được)
+//   GET    /api/orders               -> xem tất cả đơn (CHỈ admin)
+//   PATCH  /api/orders/:id/status    -> đổi trạng thái đơn (CHỈ admin)   [MỚI]
+//   DELETE /api/orders/:id           -> xóa 1 đơn hàng (CHỈ admin)
 // ============================================================
 
 const express = require("express");
 const Order = require("../models/Order");
 const Product = require("../models/Product");
-// [MỚI] "Người gác cổng" được tách ra file riêng (middleware/requireAdmin.js)
-// để dùng chung với products.routes.js. Hàm requireAdmin cũ ở đầu file này đã được bỏ.
 const requireAdmin = require("../middleware/requireAdmin");
 
 const router = express.Router();
 
-// Trả lại hàng vào kho nếu đặt đơn giữa chừng bị lỗi
+const ORDER_STATUSES = ["pending", "confirmed", "shipping", "completed", "cancelled"];
+
+// Trả lại hàng vào kho (dùng khi đặt đơn bị lỗi giữa chừng, hoặc khi hủy đơn)
 async function restoreStock(deducted) {
     for (const { id, quantity } of deducted) {
         await Product.updateOne({ id }, { $inc: { stock: quantity } });
@@ -23,15 +24,14 @@ async function restoreStock(deducted) {
 }
 
 // ---------- POST /api/orders ----------
-// Khách chỉ gửi {id, quantity}. TÊN và GIÁ do server tự lấy từ MongoDB,
-// nên khách không thể tự sửa giá để mua rẻ.
+// Khách chỉ gửi {id, quantity}. TÊN và GIÁ do server tự lấy từ MongoDB.
 router.post("/", async (req, res) => {
-    const deducted = []; // ghi lại những sản phẩm đã trừ kho (để hoàn lại khi lỗi)
+    const deducted = [];
 
     try {
-        const { customerName, phone, address, note, cart } = req.body; // dữ liệu khách gửi
+        const { customerName, phone, address, note, cart } = req.body;
 
-        // --- 1. Kiểm tra thông tin khách (server luôn kiểm tra lại, không tin client) ---
+        // --- 1. Kiểm tra thông tin khách ---
         if (!customerName || customerName.trim().length < 3) {
             return res.status(400).json({ error: "Họ tên phải có ít nhất 3 ký tự." });
         }
@@ -46,7 +46,7 @@ router.post("/", async (req, res) => {
         }
 
         // --- 2. Gộp các dòng trùng id, kiểm tra id/số lượng hợp lệ ---
-        const wanted = new Map(); // id -> tổng số lượng muốn mua
+        const wanted = new Map();
         for (const line of cart) {
             const id = Number(line && line.id);
             const quantity = Number(line && line.quantity);
@@ -75,16 +75,15 @@ router.post("/", async (req, res) => {
             }
         }
 
-        // --- 5. Trừ kho. Điều kiện "stock >= quantity" đảm bảo kho không bao giờ bị âm,
-        // kể cả khi 2 người đặt cùng lúc. ---
+        // --- 5. Trừ kho (điều kiện stock >= quantity chống kho bị âm) ---
         for (const product of products) {
             const quantity = wanted.get(product.id);
             const result = await Product.updateOne(
                 { id: product.id, stock: { $gte: quantity } },
-                { $inc: { stock: -quantity } } //$inc = cộng/trừ số
+                { $inc: { stock: -quantity } }
             );
             if (result.modifiedCount === 0) {
-                await restoreStock(deducted); // trả lại những món đã lỡ trừ
+                await restoreStock(deducted);
                 return res.status(409).json({
                     error: `"${product.name}" vừa hết hàng, vui lòng kiểm tra lại giỏ hàng.`,
                 });
@@ -92,7 +91,7 @@ router.post("/", async (req, res) => {
             deducted.push({ id: product.id, quantity });
         }
 
-        // --- 6. Tạo bản chụp các món (dùng giá thật từ database) ---
+        // --- 6. Tạo bản chụp các món (giá thật từ database) ---
         const items = products.map((product) => ({
             productId: product.id,
             name: product.name,
@@ -101,10 +100,9 @@ router.post("/", async (req, res) => {
             image: product.image,
         }));
 
-        // Server tự tính tổng tiền
         const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-        // --- 7. Lưu đơn hàng vào MongoDB ---
+        // --- 7. Lưu đơn hàng ---
         const order = await Order.create({
             customerName: customerName.trim(),
             phone: phone.trim(),
@@ -114,11 +112,11 @@ router.post("/", async (req, res) => {
             totalPrice,
         });
 
-        res.status(201).json(order); // 201 = tạo thành công, trả đơn vừa tạo về
+        res.status(201).json(order);
     } catch (error) {
         console.error("Lỗi khi tạo đơn hàng:", error);
         try {
-            await restoreStock(deducted); // lỗi thì trả lại kho
+            await restoreStock(deducted);
         } catch (restoreError) {
             console.error("Lỗi khi hoàn tồn kho:", restoreError);
         }
@@ -129,7 +127,7 @@ router.post("/", async (req, res) => {
 // ---------- GET /api/orders (chỉ admin) ----------
 router.get("/", requireAdmin, async (req, res) => {
     try {
-        const orders = await Order.find().sort({ createdAt: -1 }); // đơn mới nhất trước
+        const orders = await Order.find().sort({ createdAt: -1 });
         res.json(orders);
     } catch (error) {
         console.error("Lỗi khi lấy danh sách đơn hàng:", error);
@@ -137,23 +135,54 @@ router.get("/", requireAdmin, async (req, res) => {
     }
 });
 
-// ---------- DELETE /api/orders/:id (chỉ admin) ---------- [MỚI]
-// Gọi: DELETE /api/orders/<_id> kèm header "x-admin-key: <ADMIN_KEY>".
-// Lưu ý: đơn hàng dùng _id của MongoDB (chuỗi dài, lấy từ GET /api/orders),
-// khác với sản phẩm dùng id số.
+// ---------- PATCH /api/orders/:id/status (chỉ admin) ---------- [MỚI]
+// Gọi: PATCH /api/orders/<_id>/status kèm header "x-admin-key", body: { "status": "confirmed" }
+// Trạng thái: pending | confirmed | shipping | completed | cancelled
+// Chuyển sang "cancelled" sẽ tự hoàn lại tồn kho.
+// Đơn đã hủy thì không mở lại được (vì kho đã được trả).
+router.patch("/:id/status", requireAdmin, async (req, res) => {
+    try {
+        const { status } = req.body;
+        if (!ORDER_STATUSES.includes(status)) {
+            return res.status(400).json({
+                error: `Trạng thái không hợp lệ. Chọn một trong: ${ORDER_STATUSES.join(", ")}`,
+            });
+        }
+
+        const order = await Order.findById(req.params.id);
+        if (!order) {
+            return res.status(404).json({ error: "Không tìm thấy đơn hàng" });
+        }
+
+        if (order.status === "cancelled" && status !== "cancelled") {
+            return res.status(400).json({ error: "Đơn đã hủy, không thể mở lại. Hãy tạo đơn mới." });
+        }
+
+        // Hủy đơn lần đầu -> hoàn lại tồn kho
+        if (status === "cancelled" && order.status !== "cancelled") {
+            await restoreStock(order.items.map((i) => ({ id: i.productId, quantity: i.quantity })));
+        }
+
+        order.status = status;
+        await order.save();
+        res.json(order);
+    } catch (error) {
+        // _id sai định dạng (không phải 24 ký tự hex) cũng nhảy vào đây
+        console.error("Lỗi khi cập nhật trạng thái đơn hàng:", error);
+        res.status(400).json({ error: "Mã đơn hàng không hợp lệ" });
+    }
+});
+
+// ---------- DELETE /api/orders/:id (chỉ admin) ----------
+// Lưu ý: xóa đơn KHÔNG tự hoàn kho. Muốn hoàn kho thì dùng PATCH status = "cancelled" trước.
 router.delete("/:id", requireAdmin, async (req, res) => {
     try {
-        // findByIdAndDelete: tìm theo _id rồi xóa, trả về đơn vừa xóa (hoặc null nếu không có)
         const deleted = await Order.findByIdAndDelete(req.params.id);
         if (!deleted) {
             return res.status(404).json({ error: "Không tìm thấy đơn hàng" });
         }
-
-        // Xóa đơn KHÔNG tự hoàn lại tồn kho. Nếu muốn hoàn kho khi hủy đơn,
-        // cần cộng lại stock cho từng món trong deleted.items.
         res.json({ message: "Đã xóa đơn hàng" });
     } catch (error) {
-        // _id sai định dạng (không phải 24 ký tự hex) cũng nhảy vào đây
         console.error("Lỗi khi xóa đơn hàng:", error);
         res.status(400).json({ error: "Mã đơn hàng không hợp lệ" });
     }
