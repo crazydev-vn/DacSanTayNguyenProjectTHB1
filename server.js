@@ -1,56 +1,65 @@
 // server.js: cửa vào của toàn bộ trang khi chạy
 // npm start -> node chạy server.js:
 // 1. Kết nối MongoDB (config/db.js)
-// 2. trả các file html/css/js/ ảnh trong folder public
-// 3. Cung cấp API (/api/products; /api/orders)
-// 4. Dữ liệu sản phẩm/đơn hàng giờ nằm trong MongoDB thay vì file JSON
-
-// server.js: "cửa vào" của cả website. Chạy bằng npm run dev / npm start.
-// Nhiệm vụ: (1) kết nối MongoDB, (2) mở các API, (3) phục vụ file trong thư mục public.
+// 2. Cung cấp API (/api/products; /api/orders; /api/health)
+// 3. Trả các file html/css/js/ảnh trong folder public
+// 4. Dữ liệu sản phẩm/đơn hàng nằm trong MongoDB thay vì file JSON
 
 require("dotenv").config(); // nạp biến từ file .env (MONGODB_URI, PORT, ADMIN_KEY...)
 
 const express = require("express");
 const path = require("path");
-const cors = require("cors"); // Thêm CORS cho phép gọi API khác cổng (khi dùng Live Server)
+const cors = require("cors"); // cho phép gọi API khác cổng (khi dùng Live Server)
+const mongoose = require("mongoose"); // [MỚI] dùng để kiểm tra trạng thái kết nối ở /api/health
 const connectDB = require("./config/db");
 
-// routes mỗi file -> xử lý 1 nhóm API giúp sever.js gọn + dễ update
+// Mỗi file router xử lý 1 nhóm API giúp server.js gọn + dễ cập nhật
 const productsRouter = require("./routes/products.routes");
 const ordersRouter = require("./routes/orders.routes");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// cho phép trang ở cổng khác (vd Live Server 5501) gọi API này
+// Cho phép trang ở cổng khác (vd Live Server 5501) gọi API này
 app.use(cors());
 
-// express.json() là middleware: MỌI request đi qua đây trước khi tới
-// route. Nó đọc phần "body" thô (chuỗi JSON) mà client gửi lên, parse
-// thành object JS và gán vào req.body - nếu thiếu dòng này thì
-// req.body trong orders.routes.js sẽ là undefined.
-app.use(express.json());    // -> đọc dữ liệu JSON khách gửi lên thành req.body
+// express.json() là middleware: MỌI request đi qua đây trước khi tới route.
+// Nó đọc phần "body" thô (chuỗi JSON) client gửi lên, parse thành object JS
+// và gán vào req.body - thiếu dòng này thì req.body sẽ là undefined.
+app.use(express.json());
 
-// Gắn router vào các API - đây là bước "định tuyến": request tới
-// đúng tiền tố nào (/api/products hay /api/orders) sẽ được chuyển hẳn
-// cho file router tương ứng xử lý tiếp, server.js không biết chi tiết
-// cho phép trang ở cổng khác (vd Live Server 5501) gọi API này
-// logic bên trong, chỉ biết chuyển tiếp đúng chỗ.
-app.use("/api/products", productsRouter); // GET  /api/products -> productsRouter xử lý
-app.use("/api/orders", ordersRouter);     // POST /api/orders -> ordersRouter xử lý
+// [MỚI] GET /api/health: kiểm tra server còn sống và database có đang kết nối không.
+// readyState === 1 nghĩa là MongoDB đã kết nối. Hữu ích khi deploy/giám sát.
+app.get("/api/health", (req, res) => {
+    const dbConnected = mongoose.connection.readyState === 1;
+    res.status(dbConnected ? 200 : 503).json({
+        status: dbConnected ? "ok" : "database_unavailable",
+        uptime: Math.round(process.uptime()), // số giây server đã chạy
+    });
+});
+
+// Gắn router vào các API - bước "định tuyến": request tới đúng tiền tố
+// (/api/products hay /api/orders) sẽ được chuyển cho file router tương ứng.
+app.use("/api/products", productsRouter); // GET/POST/PUT/DELETE /api/products
+app.use("/api/orders", ordersRouter);     // POST/GET/PATCH/DELETE /api/orders
+
+// [MỚI] Đường dẫn /api/... không tồn tại -> trả JSON lỗi 404.
+// Phải đặt TRƯỚC fallback bên dưới, nếu không API sai đường dẫn sẽ bị trả nhầm trang index.html.
+app.use("/api", (req, res) => {
+    res.status(404).json({ error: "API không tồn tại" });
+});
 
 // Biến thư mục "public" thành trang web (html, css, js, ảnh nằm trong đó)
 app.use(express.static(path.join(__dirname, "public")));
 
-// Fallback: nếu gõ sai đường dẫn thì đưa về trang chủ
+// Fallback: nếu gõ sai đường dẫn trang thì đưa về trang chủ
 app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// Kết nối MongoDB xong mới mở, tránh trường hợp có request tới nhưng Database chưa sẵn sàng 
-// (await connectDB() sẽ "đứng chờ"
-// tới khi mongoose.connect() thành công hoặc lỗi, app.listen() chỉ
-// chạy sau khi Promise đó resolve).
+// Kết nối MongoDB xong mới mở server, tránh trường hợp có request tới
+// nhưng database chưa sẵn sàng (await connectDB() sẽ "đứng chờ" tới khi
+// kết nối thành công hoặc lỗi; app.listen() chỉ chạy sau đó).
 async function start() {
     await connectDB();
     app.listen(PORT, () => {

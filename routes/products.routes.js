@@ -23,7 +23,21 @@ function escapeRegex(text) {
     return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+// Các kiểu sắp xếp cho phép (kèm id để thứ tự luôn ổn định khi trùng giá/tên)
+const SORTS = {
+    id_asc: { id: 1 },
+    price_asc: { price: 1, id: 1 },
+    price_desc: { price: -1, id: 1 },
+    name_asc: { name: 1, id: 1 },
+    newest: { createdAt: -1, id: -1 },
+};
+
 // ---------- GET /api/products ----------
+// Tham số (đều tùy chọn): search, category, price, featured=true,
+//   sort = id_asc | price_asc | price_desc | name_asc | newest
+//   page, limit (limit tối đa 50)
+// Không gửi page/limit -> trả MẢNG như cũ (frontend hiện tại không bị ảnh hưởng).
+// Có gửi page/limit -> trả { data, page, limit, total, totalPages }.
 router.get("/", async (req, res) => {
     try {
         const { search, category, price } = req.query;
@@ -53,8 +67,28 @@ router.get("/", async (req, res) => {
             }
         }
 
-        const products = await Product.find(filter).sort({ id: 1 });
-        res.json(products);
+        if (req.query.featured === "true") {
+            filter.featured = true;
+        }
+
+        const sort = SORTS[req.query.sort] || SORTS.id_asc;
+
+        // Không phân trang -> trả mảng như cũ
+        if (req.query.page === undefined && req.query.limit === undefined) {
+            const products = await Product.find(filter).sort(sort);
+            return res.json(products);
+        }
+
+        // Có phân trang
+        const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 9, 1), 50);
+        const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+
+        const [total, data] = await Promise.all([
+            Product.countDocuments(filter),
+            Product.find(filter).sort(sort).skip((page - 1) * limit).limit(limit),
+        ]);
+
+        res.json({ data, page, limit, total, totalPages: Math.ceil(total / limit) });
     } catch (error) {
         console.error("Lỗi khi lấy danh sách sản phẩm:", error);
         res.status(500).json({ error: "Lỗi server khi lấy danh sách sản phẩm" });
