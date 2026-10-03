@@ -1,7 +1,11 @@
 // scripts/seedProducts.js
 // VAI TRÒ: đưa dữ liệu từ data/products.json VÀO MongoDB.
-// Chạy bằng: npm run seed (chỉ cần khi mới cài hoặc muốn nạp lại dữ liệu mẫu)
-// Chạy lại nhiều lần vẫn an toàn: sản phẩm có sẵn thì cập nhật, chưa có thì thêm.
+//
+// Cách chạy:
+//   npm run seed             -> thêm/cập nhật 10 sản phẩm mẫu (giữ nguyên sản phẩm thêm tay)
+//   npm run seed:reset       -> XÓA SẠCH sản phẩm rồi nạp lại đúng như products.json
+//   npm run seed:reset-all   -> như trên và XÓA LUÔN toàn bộ đơn hàng
+//
 // LƯU Ý: chạy lại sẽ đưa "stock" về số ghi trong products.json.
 
 require("dotenv").config(); // đọc file .env
@@ -10,6 +14,11 @@ const path = require("path");
 const mongoose = require("mongoose");
 const connectDB = require("../config/db");
 const Product = require("../models/Product");
+const Order = require("../models/Order");
+
+const args = process.argv.slice(2);
+const RESET = args.includes("--reset");   // xóa hết sản phẩm trước khi nạp
+const ORDERS = args.includes("--orders"); // xóa luôn đơn hàng
 
 async function seed() {
     await connectDB(); // 1. kết nối MongoDB
@@ -19,10 +28,20 @@ async function seed() {
     const raw = fs.readFileSync(filePath, "utf-8");
     const products = JSON.parse(raw);
 
+    // 3. (tùy chọn) dọn dữ liệu cũ để quay về trạng thái ban đầu
+    if (RESET) {
+        const del = await Product.deleteMany({});
+        console.log(`🗑️  Đã xóa ${del.deletedCount} sản phẩm cũ.`);
+    }
+    if (ORDERS) {
+        const delOrders = await Order.deleteMany({});
+        console.log(`🗑️  Đã xóa ${delOrders.deletedCount} đơn hàng.`);
+    }
+
     let created = 0;
     let updated = 0;
 
-    // 3. với từng sản phẩm: tìm theo "id", có rồi thì cập nhật, chưa có thì thêm mới (upsert)
+    // 4. với từng sản phẩm: có rồi thì cập nhật, chưa có thì thêm mới (upsert)
     for (const product of products) {
         const result = await Product.findOneAndUpdate(
             { id: product.id },
@@ -37,7 +56,7 @@ async function seed() {
     }
 
     console.log(`✅ Seed hoàn tất: ${created} sản phẩm mới, ${updated} sản phẩm cập nhật.`);
-    await mongoose.disconnect(); // 4. đóng kết nối rồi thoát
+    await mongoose.disconnect(); // 5. đóng kết nối rồi thoát
     process.exit(0);
 }
 
